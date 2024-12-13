@@ -3,6 +3,8 @@ package main
 import (
 	"net"
 	"log"
+	"sync"
+	"tracker-server/client"
 )
 
 //Constants
@@ -10,7 +12,8 @@ const NETWORK_PROTOCOL = "tcp"
 const LISTENER_ADDR = "127.0.0.1:9595"
 
 //Global variables
-
+var connMap *sync.Map
+var total_conn_num *uint64
 
 /*Main execution loop that listens to new connection requests */
 func main() {
@@ -23,6 +26,7 @@ func main() {
 	
 	//Closes at the end of execution
 	defer con_listener.Close()
+	log.Printf("[INFO] Initializing server on %s\n", LISTENER_ADDR)
 
 	//Handling connection requests
 	for {
@@ -31,7 +35,12 @@ func main() {
 		if err != nil {
 			log.Printf("[ERROR] Listener couldn't handle new connection request: %s \n", err)
 		}
+		
+		//Gets client address and uses it as key for "connMap"
+		conn_addr := conn.RemoteAddr().String()
+		connMap.Store(conn_addr, conn)
 
-		//TODO pass the new connection to a go routine that handles the connection
+		//Runs routine
+		go client.ClientRoutine(conn_addr, connMap, total_conn_num) 
 	}
 }
