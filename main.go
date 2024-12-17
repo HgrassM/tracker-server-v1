@@ -9,11 +9,11 @@ import (
 
 //Constants
 const NETWORK_PROTOCOL = "tcp"
-const LISTENER_ADDR = "127.0.0.1:9595"
+const LISTENER_ADDR = ":9595"
 
 //Global variables
-var connMap *sync.Map
 var total_conn_num *uint64
+var connMap *sync.Map
 
 /*Main execution loop that listens to new connection requests */
 func main() {
@@ -34,13 +34,10 @@ func main() {
 
 		if err != nil {
 			log.Printf("[ERROR] Listener couldn't handle new connection request: %s \n", err)
+			continue
 		}
-		
-		//Gets client address and uses it as key for "connMap"
-		conn_addr := conn.RemoteAddr().String()
-		connMap.Store(conn_addr, conn)
 
 		//Runs routine
-		go client.ClientRoutine(conn_addr, connMap, total_conn_num) 
+		go client.ClientRoutine(conn, connMap, total_conn_num) 
 	}
 }
