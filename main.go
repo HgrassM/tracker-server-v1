@@ -14,6 +14,7 @@ const LISTENER_ADDR = ":9595"
 //Global variables
 var total_conn_num *uint64
 var connMap *sync.Map
+var counter_mutex *sync.Mutex
 
 /*Main execution loop that listens to new connection requests */
 func main() {
@@ -26,7 +27,7 @@ func main() {
 	
 	//Closes at the end of execution
 	defer con_listener.Close()
-	log.Printf("[INFO] Initializing server on %s\n", LISTENER_ADDR)
+	log.Printf("[INFO] Initializing server on 127.0.0.1%s\n", LISTENER_ADDR)
 
 	//Handling connection requests
 	for {
@@ -38,6 +39,6 @@ func main() {
 		}
 
 		//Runs routine
-		go client.ClientRoutine(conn, connMap, total_conn_num) 
+		go client.ClientRoutine(conn, connMap, total_conn_num, counter_mutex) 
 	}
 }

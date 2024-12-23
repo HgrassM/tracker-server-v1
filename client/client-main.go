@@ -44,18 +44,18 @@ import (
 	"net"
 	"log"
 	"sync"
-	"errors"
 	"time"
 )
 
 func ClientRoutine(client_conn net.Conn, connMap *sync.Map, counter_ptr *uint64, counter_mutex *sync.Mutex) {
 	var bytes_read int
 	var bytes_written int
-	received_message_buffer := make([]byte, 1024)
-	timeout := time.Time{}.Add(Duration.Seconds(5)) 
-
+	var io_err error
+	message_buffer := make([]byte, 1024)
+	
 	//Setting timeout for connection
-	err := client_conn.SetReadDeadLine(timeout)
+	timeout := time.Time{}.Add(time.Second*5000)
+	err := client_conn.SetReadDeadline(timeout)
 	
 	//Adding counter
 	counter_mutex.Lock()
@@ -63,34 +63,35 @@ func ClientRoutine(client_conn net.Conn, connMap *sync.Map, counter_ptr *uint64,
 	counter_mutex.Unlock()
 
 	if err != nil {
-		log.Printf("[ERROR] Couldn't set timeout for client tcp conn of address "%s". Message: %s \n", client_addr, err)
+		log.Printf("[ERROR] Couldn't set timeout for client tcp conn of address: %s. Message: %s \n", client_conn.RemoteAddr(), err)
 		close_err := client_conn.Close()
 		
 		if (close_err != nil) {
-			log.Printf("[ERROR] Couldn't close client tcp conn of address "%s". Message: %s \n", client_addr, close_err)		
+			log.Printf("[ERROR] Couldn't close client tcp conn of address: %s. Message: %s \n", client_conn.RemoteAddr(), close_err)		
 		}
 
 		return 
 	}
 
 	for {	
-		//Tries to read message from client
+		//Tries to read message from client		
 		bytes_read, io_err = client_conn.Read(message_buffer)
 
 		if (io_err) != nil {
-			log.Printf("[ERROR] Error while trying to read from client tpc conn of address "%s". Message: %s \n", client_addr, io_err)
+			log.Printf("[ERROR] Error while trying to read from client tpc conn of address: %s. Message: %s \n", client_conn.RemoteAddr(), io_err)
 			continue
 		}
 		
 		//Get response message
-		message_to_write = getResponse(message_buffer, bytes_read, client_conn, connMap *sync.Map)
+		message_to_write := getResponse(message_buffer, bytes_read, client_conn, connMap)
 
 		bytes_written, io_err = client_conn.Write(message_to_write)
 
 		if (io_err) != nil {
-			log.Printf("[ERROR] Error while trying to read from client tpc conn of address "%s". Message: %s \n", client_addr, io_err)
+			log.Printf("[ERROR] Error while trying to read from client tpc conn of address: %s. Message: %s \n", client_conn.RemoteAddr(), io_err)
 			continue
 		}
 
+		log.Printf("[INFO] Sending %d bytes to client through tcp conn of address: %s.\n", bytes_written, client_conn.RemoteAddr())
 	}
 }

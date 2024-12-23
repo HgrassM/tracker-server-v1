@@ -1,8 +1,6 @@
 package client
 
 import (
-	"log"
-	"errors"
 	"sync"
 	"net"
 	"fmt"
@@ -13,10 +11,10 @@ const ASK_RESEND_RESPONSE = "4\n"
 const OPTION_2_SUCCESS = "2OK\n"
 const OPTION_3_FAILURE = "3FAIL\n"
 
-func setClientUsername(username string, client_conn net.Conn connMap *sync.Map) string {
+func setClientUsername(username string, client_conn net.Conn, connMap *sync.Map) string {
 	connMap.Store(username, client_conn)
 	
-	response := OPTION_2_SUCCESS_DATA
+	response := OPTION_2_SUCCESS
 
 	return response
 }
@@ -35,33 +33,32 @@ func getPeerAddr(username string, connMap *sync.Map) string {
 }
 
 func getResponse(message_buffer []byte, message_bytes_num int, client_conn net.Conn, connMap *sync.Map) []byte {
-	var io_err error
 	var received_option string
 	var received_data string
 	var message_to_write string
 	message_len := message_bytes_num - 1;
 
 	//If the received message has no delimiter, the client is asked to resend it
-	if (message_buffer[message_len] != "\n") {
+	if (string(message_buffer[message_len]) != "\n") {
 		message_to_write = ASK_RESEND_RESPONSE
 	}else{
 		//Getting message fields
-		received_option = string(received_message_buffer[0])
+		received_option = string(message_buffer[0])
 		 
-		if (bytes_read > 2) {
-			received_data = string(received_message_buffer[1:message_len])
+		if (message_bytes_num > 2) {
+			received_data = string(message_buffer[1:message_len])
 		}else{
-			received_data = nil	
+			received_data = ""	
 		}
 
 		switch (received_option) {
-			case 1:
+			case "1":
 				//Respond to heartbeat
-				messate_to_write = HEARTBEAT_RESPONSE
-			case 2:
+				message_to_write = HEARTBEAT_RESPONSE
+			case "2":
 				//Set username
-				message_to_write = setClientUsername(received_data, connMap)
-			case 3:
+				message_to_write = setClientUsername(received_data, client_conn, connMap)
+			case "3":
 				//Get the desired user's ip
 				message_to_write = getPeerAddr(received_data, connMap)		
 			default:
