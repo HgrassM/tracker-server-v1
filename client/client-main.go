@@ -72,6 +72,10 @@ func ClientRoutine(client_conn net.Conn, connMap *sync.Map, counter_ptr *uint64,
 
 		return 
 	}
+	
+	//Log messages when a client successfully connects to the server
+	log.Printf("[INFO] Client of address %s has connected to the server.\n", client_conn.RemoteAddr())
+	log.Printf("[INFO] The current number of active connections on the server is: %d.\n", *counter_ptr)
 
 	for {	
 		//Tries to read message from client		
