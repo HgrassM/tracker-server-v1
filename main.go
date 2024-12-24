@@ -12,9 +12,9 @@ const NETWORK_PROTOCOL = "tcp"
 const LISTENER_ADDR = ":9595"
 
 //Global variables
-var total_conn_num *uint64
-var connMap *sync.Map
-var counter_mutex *sync.Mutex
+var total_conn_num uint64
+var connMap sync.Map
+var counter_mutex sync.Mutex
 
 /*Main execution loop that listens to new connection requests */
 func main() {
@@ -39,6 +39,6 @@ func main() {
 		}
 
 		//Runs routine
-		go client.ClientRoutine(conn, connMap, total_conn_num, counter_mutex) 
+		go client.ClientRoutine(conn, &connMap, &total_conn_num, &counter_mutex) 
 	}
 }

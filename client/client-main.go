@@ -54,8 +54,8 @@ func ClientRoutine(client_conn net.Conn, connMap *sync.Map, counter_ptr *uint64,
 	message_buffer := make([]byte, 1024)
 	
 	//Setting timeout for connection
-	timeout := time.Time{}.Add(time.Second*5000)
-	err := client_conn.SetReadDeadline(timeout)
+	timeout := time.Now().Add(time.Second*5000)
+	err := client_conn.SetDeadline(timeout)
 	
 	//Adding counter
 	counter_mutex.Lock()
